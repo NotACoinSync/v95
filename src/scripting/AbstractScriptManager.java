@@ -1,15 +1,16 @@
 package scripting;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import client.MapleClient;
-import tools.logger.Logger;
-import tools.logger.Logger.LogFile;
-import tools.logger.Logger.LogType;
 
 /**
  @author Matze
@@ -37,10 +38,11 @@ public abstract class AbstractScriptManager {
             if (c != null) {
                 c.setScriptEngine(path, engine);
             }
-            try (FileReader fr = new FileReader(scriptFile)) {
-                engine.eval(fr);
-            } catch (Exception t) {
-                Logger.log(LogType.ERROR, LogFile.EXCEPTION, t, path.substring(12, path.length()) + "\r\n" + path);
+            try (Stream<String> stream = Files.lines(scriptFile.toPath())) {
+                String lines = "load('nashorn:mozilla_compat.js');";
+                lines += stream.collect(Collectors.joining(System.lineSeparator()));
+                engine.eval(lines);
+            } catch (IOException | ScriptException t) {
                 return null;
             }
         }
